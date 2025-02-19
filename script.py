@@ -26,32 +26,12 @@ def fetch_pharmacy_data():
         print(f"❌ API Request Failed: {response.status_code}")
         return None
 
-def transform_data(api_data):
-    """Transform API JSON to match Snowflake table structure."""
-    records = []
-    
-    for element in api_data.get("elements", []):
-        id_value = element.get("id")
-        lat = element.get("lat")
-        lon = element.get("lon")
-        name = element.get("tags", {}).get("name", "Unknown Pharmacy")
-
-        if id_value and lat and lon:
-            geo = f"POINT({lon} {lat})"  # WKT format for GEOGRAPHY
-            buffer = f"ST_BUFFER(TO_GEOGRAPHY('{geo}'), 50)"  # 50-meter buffer
-            buffer_wkt = f"ST_ASWKT({buffer})"
-
-            records.append((id_value, lat, lon, name, geo, buffer, buffer_wkt))
-
-    return records
-
-def insert_into_snowflake(records):
-    """Insert data into Snowflake TB_APT table."""
+def insert_into_snowflake(api_data):
+    """Insert raw JSON into Snowflake TB_APT_RAW table."""
     conn = None
-    cursor = None  # ✅ Ensure cursor is always initialized
+    cursor = None
 
     try:
-        
         # Connect to Snowflake
         conn = snowflake.connector.connect(
             user=SNOWFLAKE_USER,
@@ -59,36 +39,32 @@ def insert_into_snowflake(records):
             account=SNOWFLAKE_ACCOUNT,
             warehouse=SNOWFLAKE_WAREHOUSE,
             database=SNOWFLAKE_DATABASE,
-            table=SNOWFLAKE_TABLE,
             schema=SNOWFLAKE_SCHEMA
         )
         cursor = conn.cursor()
-        
-        # ✅ Step 1: Insert Raw JSON into TB_APT_RAW (Fixed)
-        raw_json_str = json.dumps(records).replace("'", "''")  # Escape single quotes
+
+        # Insert JSON into Snowflake (using VARIANT)
         sql_insert_raw = f"""
             INSERT INTO SP_DB.PUBLIC.TB_APT_RAW (RAW_JSON) 
-            SELECT TO_VARIANT('{raw_json_str}')
+            SELECT PARSE_JSON(%s)
         """
-        cursor.execute(sql_insert_raw)
+        cursor.execute(sql_insert_raw, (json.dumps(api_data),))
+
         print("✅ Raw data inserted into TB_APT_RAW!")
 
     except Exception as e:
         print(f"❌ Error: {e}")
 
     finally:
-        # Close Connection
-        cursor.close()
-        conn.close()
-
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 if __name__ == "__main__":
     data = fetch_pharmacy_data()
     
     if data:
-        transformed_records = transform_data(data)
-        if transformed_records:
-            insert_into_snowflake(transformed_records)
-        else:
-            print("⚠️ No valid records to insert.")
-
+        insert_into_snowflake(data)
+    else:
+        print("⚠️ No data fetched.")
