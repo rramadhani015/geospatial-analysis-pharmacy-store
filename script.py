@@ -50,6 +50,7 @@ def insert_into_snowflake(records):
     cursor = None  # ✅ Ensure cursor is always initialized
 
     try:
+        
         # Connect to Snowflake
         conn = snowflake.connector.connect(
             user=SNOWFLAKE_USER,
@@ -57,6 +58,7 @@ def insert_into_snowflake(records):
             account=SNOWFLAKE_ACCOUNT,
             warehouse=SNOWFLAKE_WAREHOUSE,
             database=SNOWFLAKE_DATABASE,
+            table=SNOWFLAKE_TABLE,
             schema=SNOWFLAKE_SCHEMA
         )
         cursor = conn.cursor()
@@ -64,7 +66,7 @@ def insert_into_snowflake(records):
         # ✅ Step 1: Insert Raw JSON into TB_APT_RAW (Fixed)
         raw_json_str = json.dumps(records).replace("'", "''")  # Escape single quotes
         sql_insert_raw = f"""
-            INSERT INTO SP_DB.PUBLIC.TB_APT_RAW (RAW_JSON) 
+            INSERT INTO '{SNOWFLAKE_DATABASE}'.'{SNOWFLAKE_SCHEMA}'.'{SNOWFLAKE_TABLE}' (RAW_JSON) 
             SELECT TO_VARIANT('{raw_json_str}')
         """
         cursor.execute(sql_insert_raw)
