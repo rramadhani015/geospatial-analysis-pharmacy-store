@@ -67,7 +67,7 @@ def insert_into_snowflake(records):
         # ✅ Step 1: Insert Raw JSON into TB_APT_RAW (Fixed)
         raw_json_str = json.dumps(records).replace("'", "''")  # Escape single quotes
         sql_insert_raw = f"""
-            INSERT INTO '{SNOWFLAKE_DATABASE}'.'{SNOWFLAKE_SCHEMA}'.'{SNOWFLAKE_TABLE}' (RAW_JSON) 
+            INSERT INTO {SNOWFLAKE_DATABASE}.{SNOWFLAKE_SCHEMA}.{SNOWFLAKE_TABLE} (RAW_JSON) 
             SELECT TO_VARIANT('{raw_json_str}')
         """
         cursor.execute(sql_insert_raw)
