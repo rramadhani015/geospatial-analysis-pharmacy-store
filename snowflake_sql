@@ -1,0 +1,26 @@
+-- table to store raw data from API
+CREATE OR REPLACE TABLE SP_DB.PUBLIC.TB_APT_RAW (
+    ID NUMBER AUTOINCREMENT,
+    RAW_JSON VARIANT,
+    INSERTED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- dynamic table to store transformed data
+CREATE OR REPLACE DYNAMIC TABLE SP_DB.PUBLIC.TB_APT
+TARGET_LAG = '7 days'
+WAREHOUSE = 'COMPUTE_WH'
+AS
+SELECT 
+    e.value:id::NUMBER AS id,
+    e.value:lat::FLOAT AS latitude,
+    e.value:lon::FLOAT AS longitude,
+    e.value:tags.name::STRING AS name, -- Extracts pharmacy name
+    e.value:tags.amenity::STRING AS amenity, 
+    e.value:tags.brand::STRING AS brand,
+    e.value:tags."addr:full"::STRING AS full_addr,
+    e.value:tags."addr:street"::STRING AS street,
+    e.value:tags."addr:city"::STRING AS city,
+    e.value:tags."addr:postcode"::STRING AS postcode, 
+    e.value:"tags"::STRING AS "tags" 
+FROM SP_DB.PUBLIC.TB_APT_RAW,
+LATERAL FLATTEN(input => RAW_JSON:"elements") e;
