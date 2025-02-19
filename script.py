@@ -9,18 +9,18 @@ def hit_api():
     if response.status_code == 200:
         data = response.json()
         
-        # Print the result in a readable format
-        print("Pharmacies in Jakarta:")
+        # Print the raw JSON response to ensure it's visible in logs
+        print("=== RAW API RESPONSE ===")
+        print(json.dumps(data, indent=4))  # Pretty-print JSON for GitHub logs
+
+        # Extract pharmacy details
+        print("=== Extracted Pharmacy List ===")
         for element in data.get("elements", []):
             tags = element.get("tags", {})
             name = tags.get("name", "Unknown Pharmacy")
             address = tags.get("addr:street", "No Address Available")
             print(f"- {name} ({address})")
 
-        # Optional: Save to a JSON file
-        with open("pharmacies.json", "w") as file:
-            json.dump(data, file, indent=4)
-        
     else:
         print("Error:", response.status_code, response.text)
 
