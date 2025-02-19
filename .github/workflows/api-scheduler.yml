@@ -1,25 +1,32 @@
-name: API Automation
+name: Weekly Snowflake Data Insert
 
 on:
   schedule:
-    - cron: '0 0 * * 0'  # Runs every 10 minutes
-  workflow_dispatch:  # Allows manual execution
+    - cron: '0 3 * * 1'  # Runs every Monday at 03:00 UTC
+  workflow_dispatch:  # Allows manual trigger
 
 jobs:
-  run-api:
-    runs-on: ubuntu-latest
+  insert_data:
+    runs-on: ubuntu-latest  # Uses GitHub's Ubuntu server
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3  # Fetch latest code
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: "3.9"
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install -r requirements.txt  # Ensure required packages are installed
 
-      - name: Run Python Script
-        run: python script.py
+      - name: Run script to insert data into Snowflake
+        env:
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+          SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+          SNOWFLAKE_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+        run: python your_script.py  # Replace with your actual script name
