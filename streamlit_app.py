@@ -31,6 +31,17 @@ def get_snowflake_connection():
 conn = get_snowflake_connection()
 cursor = conn.cursor()
 
+# Title and Introduction
+st.title("📍 Geospatial Data Visualization: Pharmacy Coverage & Density Analysis")
+st.markdown("""
+This interactive map helps analyze **pharmacy locations** with different visualization techniques:  
+- **Buffer Zones** (Coverage area)  
+- **H3 Hexagonal Aggregation** (Spatial insights)  
+- **Heatmap** (Density distribution)  
+
+🔍 **Use the controls on the left to customize the view!**
+""")
+
 # Sidebar settings
 st.sidebar.header("🛠️ Map Controls")
 
