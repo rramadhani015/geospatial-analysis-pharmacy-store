@@ -9,11 +9,11 @@ import snowflake.connector
 @st.cache_resource
 def get_snowflake_connection():
     return snowflake.connector.connect(
-        user=st.secrets["SNOWFLAKE_USER"],
-        password=st.secrets["SNOWFLAKE_PASSWORD"],
-        account=st.secrets["SNOWFLAKE_ACCOUNT"],
-        warehouse=st.secrets["SNOWFLAKE_WAREHOUSE"],
-        database=st.secrets["SNOWFLAKE_DATABASE"]
+        user=${{ secrets.SNOWFLAKE_USER }},
+        password=${{ secrets.SNOWFLAKE_PASSWORD }},
+        account=${{ secrets.SNOWFLAKE_ACCOUNT }},
+        warehouse=${{ secrets.SNOWFLAKE_WAREHOUSE }},
+        database=${{ secrets.SNOWFLAKE_DATABASE }}
     )
 
 conn = get_snowflake_connection()
