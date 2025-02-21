@@ -1,2 +1,6 @@
 snowflake-connector-python
 requests
+h3
+shapely
+pandas
+pydeck
