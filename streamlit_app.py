@@ -54,8 +54,9 @@ def insert_into_snowflake(api_data):
     """Insert raw JSON into Snowflake TB_APT_RAW table."""
     try:
         sql_insert_raw = """
+            TRUNCATE TABLE TB_APT_RAW;
             INSERT INTO TB_APT_RAW (RAW_JSON) 
-            SELECT PARSE_JSON(%s)
+            SELECT PARSE_JSON(%s);
         """
         cursor.execute(sql_insert_raw, (json.dumps(api_data),))
         conn.commit()
