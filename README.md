@@ -1,7 +1,7 @@
 # Geospatial Pharmacy Visualization with Snowflake & Streamlit
 
 ## 📌 Overview
-This project automates the retrieval, storage, and visualization of pharmacy locations using OpenStreetMap (OSM), Snowflake, and Streamlit. The pipeline consists of:
+This project has two options of data refresh. First is automates the retrieval, storage. While the second one is by using the refresh button in the Streamlit menu. Both then visualize pharmacy locations in Indonesia using OpenStreetMap (OSM), Snowflake, and Streamlit The pipeline consists of:
 
 1. **Scheduled Python Script**: Fetches pharmacy data from OSM Overpass API and updates Snowflake. The script is scheduled to run using GitHub Actions.
 2. **Snowflake Data Processing**: Stores and transforms raw data into a structured format.
