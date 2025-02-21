@@ -4,6 +4,8 @@ import pydeck as pdk
 import h3
 from shapely.geometry import Point
 import snowflake.connector
+import requests
+import json
 
 # Snowflake Connection
 @st.cache_resource
@@ -13,11 +15,43 @@ def get_snowflake_connection():
         password=st.secrets["SNOWFLAKE_PASSWORD"],
         account=st.secrets["SNOWFLAKE_ACCOUNT"],
         warehouse=st.secrets["SNOWFLAKE_WAREHOUSE"],
-        database=st.secrets["SNOWFLAKE_DATABASE"]
+        database=st.secrets["SNOWFLAKE_DATABASE"],
+        schema=st.secrets["SNOWFLAKE_SCHEMA"]
     )
 
 conn = get_snowflake_connection()
 cursor = conn.cursor()
+
+# API URL
+API_URL = "http://overpass-api.de/api/interpreter?data=[out:json][timeout:25];area['name'='Daerah Khusus ibukota Jakarta']->.a;(node['amenity'='pharmacy'](area.a);way['amenity'='pharmacy'](area.a);relation['amenity'='pharmacy'](area.a););out center tags;"
+
+def fetch_pharmacy_data():
+    """Fetch data from the Overpass API."""
+    response = requests.get(API_URL)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error(f"❌ API Request Failed: {response.status_code}")
+        return None
+
+def insert_into_snowflake(api_data):
+    """Insert raw JSON into Snowflake TB_APT_RAW table."""
+    try:
+        sql_insert_raw = """
+            INSERT INTO TB_APT_RAW (RAW_JSON) 
+            SELECT PARSE_JSON(%s)
+        """
+        cursor.execute(sql_insert_raw, (json.dumps(api_data),))
+        conn.commit()
+        st.success("✅ Data refreshed successfully!")
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
+
+# Refresh Data Button
+if st.button("🔄 Refresh Data"):
+    data = fetch_pharmacy_data()
+    if data:
+        insert_into_snowflake(data)
 
 # Query pharmacy data
 query = """SELECT name, latitude, longitude, "tags" FROM public.tb_apt WHERE latitude IS NOT NULL AND longitude IS NOT NULL"""
@@ -127,56 +161,19 @@ buffer_layer = pdk.Layer(
     stroked=True,
     filled=True,
     opacity=0.4,
-    get_fill_color=[255, 0, 0, 100],  # Red for buffer
-    get_line_color=[255, 0, 0],  # Red border
+    get_fill_color=[255, 0, 0, 100],
+    get_line_color=[255, 0, 0],
 )
-
-# H3 Layer
-h3_layer = pdk.Layer(
-    "GeoJsonLayer",
-    geojson_data,
-    pickable=True,
-    stroked=True,
-    filled=True,
-    opacity=0.4,
-    get_fill_color=[0, 128, 255, 100],  # Blue for H3
-    get_line_color=[0, 128, 255],  # Blue border
-)
-
-# Heatmap Layer with Controls
-heatmap_layer = pdk.Layer(
-    "HeatmapLayer",
-    df,
-    get_position=["LONGITUDE", "LATITUDE"],
-    opacity=heatmap_opacity if mode == "Heatmap" else 0.5,
-    radius_pixels=heatmap_radius if mode == "Heatmap" else 50,
-    intensity=heatmap_intensity if mode == "Heatmap" else 5,
-    get_weight=1,
-) if mode == "Heatmap" else None
 
 # Final Map Layers
 layers = [scatter_layer]
 if mode == "Buffer":
     layers.append(buffer_layer)
-elif mode == "H3 Hexagons":
-    layers.append(h3_layer)
-elif mode == "Heatmap":
-    layers.append(heatmap_layer)
-
-# PyDeck Tooltip
-tooltip = {"html": "<b>Pharmacy Name:</b> {name}<b><br>Tags:</b> {tags}", "style": {"backgroundColor": "steelblue", "color": "white"}}
-
-# Viewport settings
-view_state = pdk.ViewState(
-    latitude=df["LATITUDE"].mean(),
-    longitude=df["LONGITUDE"].mean(),
-    zoom=12,
-)
 
 # Render Map
 st.pydeck_chart(pdk.Deck(
     layers=layers,
-    initial_view_state=view_state,
+    initial_view_state=pdk.ViewState(latitude=df["LATITUDE"].mean(), longitude=df["LONGITUDE"].mean(), zoom=12),
     map_style=map_style,
-    tooltip=tooltip,
+    tooltip={"html": "<b>Pharmacy Name:</b> {name}<b><br>Tags:</b> {tags}", "style": {"backgroundColor": "steelblue", "color": "white"}},
 ))
