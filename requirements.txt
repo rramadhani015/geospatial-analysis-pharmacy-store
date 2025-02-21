@@ -1,6 +1,6 @@
 snowflake-connector-python
 requests
-h3
+h3>=4.0.0
 shapely
 pandas
 pydeck
