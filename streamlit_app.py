@@ -53,8 +53,14 @@ def fetch_pharmacy_data(province):
 def insert_into_snowflake(api_data):
     """Insert raw JSON into Snowflake TB_APT_RAW table."""
     try:
-        sql_insert_raw = """
+        
+        sql_truncate_raw = """
             TRUNCATE TABLE TB_APT_RAW;
+        """
+        cursor.execute(sql_truncate_raw,))
+        conn.commit()
+        
+        sql_insert_raw = """
             INSERT INTO TB_APT_RAW (RAW_JSON) 
             SELECT PARSE_JSON(%s);
         """
