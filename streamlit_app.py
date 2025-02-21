@@ -3,15 +3,26 @@ import pandas as pd
 import pydeck as pdk
 import h3
 from shapely.geometry import Point
-from snowflake.snowpark.context import get_active_session
+import snowflake.connector
 
-# Get Snowflake session
-session = get_active_session()
+# Snowflake Connection
+@st.cache_resource
+def get_snowflake_connection():
+    return snowflake.connector.connect(
+        user=st.secrets["SNOWFLAKE_USER"],
+        password=st.secrets["SNOWFLAKE_PASSWORD"],
+        account=st.secrets["SNOWFLAKE_ACCOUNT"],
+        warehouse=st.secrets["SNOWFLAKE_WAREHOUSE"],
+        database=st.secrets["SNOWFLAKE_DATABASE"]
+    )
+
+conn = get_snowflake_connection()
+cursor = conn.cursor()
 
 # Query pharmacy data
-query = f"""SELECT name, latitude, longitude,"tags" FROM public.tb_apt WHERE latitude IS NOT NULL AND longitude IS NOT NULL"""
-data = session.sql(query)
-df = data.to_pandas()
+query = """SELECT name, latitude, longitude, "tags" FROM public.tb_apt WHERE latitude IS NOT NULL AND longitude IS NOT NULL"""
+cursor.execute(query)
+df = pd.DataFrame(cursor.fetchall(), columns=["NAME", "LATITUDE", "LONGITUDE", "TAGS"])
 
 # Title and Introduction
 st.title("📍 Geospatial Data Visualization: Pharmacy Coverage & Density Analysis")
@@ -78,7 +89,7 @@ buffered_features = []
 h3_features = []
 
 for _, row in df.iterrows():
-    lat, lon, name, tags = row["LATITUDE"], row["LONGITUDE"], row["NAME"], row["tags"]
+    lat, lon, name, tags = row["LATITUDE"], row["LONGITUDE"], row["NAME"], row["TAGS"]
 
     # Buffer (Circle) Geometry
     if mode == "Buffer":
@@ -87,7 +98,7 @@ for _, row in df.iterrows():
         buffered_geojson = {
             "type": "Feature",
             "geometry": {"type": "Polygon", "coordinates": [list(map(list, buffered_polygon.exterior.coords))]},
-            "properties": {"name": name,"tags":tags},
+            "properties": {"name": name, "tags": tags},
         }
         buffered_features.append(buffered_geojson)
 
@@ -98,7 +109,7 @@ for _, row in df.iterrows():
         h3_geojson = {
             "type": "Feature",
             "geometry": {"type": "Polygon", "coordinates": [hex_boundary]},
-            "properties": {"name": name,"tags":tags},
+            "properties": {"name": name, "tags": tags},
         }
         h3_features.append(h3_geojson)
 
