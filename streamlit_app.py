@@ -86,7 +86,7 @@ if st.sidebar.button("🔍 Find and Refresh"):
 # Query pharmacy data
 query = """SELECT name, latitude, longitude, "tags" FROM public.tb_apt WHERE latitude IS NOT NULL AND longitude IS NOT NULL"""
 cursor.execute(query)
-df = pd.DataFrame(cursor.fetchall(), columns=["NAME", "LATITUDE", "LONGITUDE", "TAGS"])
+df = pd.DataFrame(cursor.fetchall(), columns=["NAME", "LATITUDE", "LONGITUDE", "tags"])
 
 # Total Record Count
 st.sidebar.markdown(f"**📊 Total Records: {len(df)}**")
