@@ -66,6 +66,13 @@ def insert_into_snowflake(api_data):
         """
         cursor.execute(sql_insert_raw, (json.dumps(api_data),))
         conn.commit()
+        
+        sql_refresh_dynamic_table = """
+            alter dynamic table TB_APT refresh;
+        """
+        cursor.execute(sql_refresh_dynamic_table,)
+        conn.commit()
+        
         st.success("✅ Data refreshed successfully!")
     except Exception as e:
         st.error(f"❌ Error: {e}")
