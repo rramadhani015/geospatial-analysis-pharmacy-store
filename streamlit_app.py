@@ -232,7 +232,7 @@ tooltip = {"html": "<b>Pharmacy Name:</b> {name}<b><br>Tags:</b> {tags}", "style
 # Focus the map on available data
 def calculate_map_view(df):
     if not df.empty:
-        return df["LATITUDE"].median(), df["LONGITUDE"].median(), 10 if len(df) > 10 else 7
+        return df["LATITUDE"].median(), df["LONGITUDE"].median(), 12 if len(df) > 10 else 10
     return -2.5489, 118.0149, 5  # Default to Indonesia's center
 
 center_lat, center_lon, zoom_level = calculate_map_view(df)
