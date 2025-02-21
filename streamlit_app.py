@@ -111,23 +111,22 @@ if search_query:
     df = df[df["NAME"].str.contains(search_query, case=False, na=False)]
 
 # Render map visualization
+
 # Focus the map on available data
 if not df.empty:
     center_lat = df["LATITUDE"].mean()
     center_lon = df["LONGITUDE"].mean()
-    initial_view_state = pdk.ViewState(
-        latitude=center_lat,
-        longitude=center_lon,
-        zoom=12,
-        pitch=0,
-    )
+    zoom_level = 12 if len(df) > 10 else 14  # Adjust zoom based on data density
 else:
-    initial_view_state = pdk.ViewState(
-        latitude=-2.5489,  # Default to Indonesia's center
-        longitude=118.0149,
-        zoom=5,
-        pitch=0,
-    )
+    center_lat, center_lon, zoom_level = -2.5489, 118.0149, 5  # Default to Indonesia's center
+
+initial_view_state = pdk.ViewState(
+    latitude=center_lat,
+    longitude=center_lon,
+    zoom=zoom_level,
+    pitch=0,
+)
+
 
 # Buffer Distance Control
 buffer_distance = st.sidebar.slider(
@@ -243,9 +242,16 @@ view_state = pdk.ViewState(
 )
 
 # Render Map
+# st.pydeck_chart(pdk.Deck(
+#     layers=layers,
+#     initial_view_state=initial_view_state,
+#     map_style=map_style,
+#     tooltip=tooltip,
+# ))
+
+# Render map visualization
 st.pydeck_chart(pdk.Deck(
-    layers=layers,
-    initial_view_state=initial_view_state,
     map_style=map_style,
-    tooltip=tooltip,
+    initial_view_state=initial_view_state,
+    layers=[scatter_layer],
 ))
