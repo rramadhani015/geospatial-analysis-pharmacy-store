@@ -57,7 +57,7 @@ def insert_into_snowflake(api_data):
         sql_truncate_raw = """
             TRUNCATE TABLE TB_APT_RAW;
         """
-        cursor.execute(sql_truncate_raw,))
+        cursor.execute(sql_truncate_raw,)
         conn.commit()
         
         sql_insert_raw = """
