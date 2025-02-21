@@ -218,11 +218,20 @@ elif mode == "Heatmap":
 # PyDeck Tooltip
 tooltip = {"html": "<b>Pharmacy Name:</b> {name}<b><br>Tags:</b> {tags}", "style": {"backgroundColor": "steelblue", "color": "white"}}
 
+# Focus the map on available data
+def calculate_map_view(df):
+    if not df.empty:
+        return df["LATITUDE"].median(), df["LONGITUDE"].median(), 12 if len(df) > 10 else 14
+    return -2.5489, 118.0149, 5  # Default to Indonesia's center
+
+center_lat, center_lon, zoom_level = calculate_map_view(df)
+
 # Viewport settings
 view_state = pdk.ViewState(
-    latitude=df["LATITUDE"].mean(),
-    longitude=df["LONGITUDE"].mean(),
-    zoom=12,
+    latitude=center_lat,
+    longitude=center_lon,
+    zoom=zoom_level,
+    pitch=0,
 )
 
 # Render Map
